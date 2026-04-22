@@ -1,3 +1,10 @@
 dec
 zip
-src/wittencleary
+
+wittencleary
+
+src/one_transform_coders
+
+tests/test_only_PackBits.cmd
+tests/test_only_ac.cmd
+tests/all.cmd

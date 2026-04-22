@@ -6,8 +6,8 @@ set "RED=!ESC![31m"
 set "RESET=!ESC![0m"
 
 
-g++ -O2 src/encoder.cpp -o encoder.exe
-g++ -O2 src/decoder.cpp -o decoder.exe
+cmd /c ".\tests\compile.cmd"
+
 
 echo.
 echo ==================== ENCODING ====================
@@ -17,6 +17,7 @@ for %%f in (dataset\*) do (
     .\encoder dataset\%%~nxf zip\%%~nxf_zip
 )
 
+
 echo.
 echo ==================== DECODING ====================
 if not exist dec mkdir dec
@@ -24,6 +25,7 @@ for %%f in (dataset\*) do (
     echo Decoding %%~nxf...
     .\decoder zip\%%~nxf_zip dec\%%~nxf_dec
 )
+
 
 echo.
 echo =================== COMPARING ====================

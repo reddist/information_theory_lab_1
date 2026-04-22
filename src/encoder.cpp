@@ -4,72 +4,9 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
+#include "coders/AAC_D/coder.h"
+#include "coders/PackBits/coder.h"
 using namespace std;
-
-static void RLE_PackBits(const vector<unsigned char>& in,
-                         vector<unsigned char>& out) {
-    const size_t n = in.size();
-
-    auto get_same_symbol_count = [in, n](size_t start) -> size_t {
-        size_t current = start + 1;
-        size_t count = 1;
-        while (
-            current < n &&
-            in[current] == in[start] &&
-            count < 128
-        ) {
-            ++current;
-            ++count;
-        }
-        return count;
-    };
-    
-    size_t i = 0;
-    size_t same_already_counted = 0;
-    size_t same_symbol_count;
-
-    while (i < n) {
-        if (same_already_counted > 0) {
-            same_symbol_count = same_already_counted;
-            same_already_counted = 0;
-        } else {
-            same_symbol_count = get_same_symbol_count(i);
-        }
-
-        if (same_symbol_count >= 3) {
-            size_t minus_counter = -(same_symbol_count - 1);
-            out.push_back(static_cast<unsigned char>(static_cast<int8_t>(minus_counter)));
-            out.push_back(in[i]);
-            i += same_symbol_count;
-            continue;
-        }
-
-        size_t j = i + same_symbol_count;
-        size_t uncoded_count = same_symbol_count;
-        
-        while (j < n) {
-            size_t same_symbol_count_j = get_same_symbol_count(j);
-            
-            if (same_symbol_count_j >= 3) {
-                same_already_counted = same_symbol_count_j;
-                break;
-            }
-
-            j += same_symbol_count_j;
-            uncoded_count += same_symbol_count_j;
-            
-            if (uncoded_count >= 128) {
-                uncoded_count = 128;
-                break;
-            }
-        }
-
-        size_t plus_counter = uncoded_count - 1;
-        out.push_back(static_cast<unsigned char>(static_cast<int8_t>(plus_counter)));
-        out.insert(out.end(), in.begin() + i, in.begin() + i + uncoded_count);
-        i += uncoded_count;
-    }
-}
 
 int main(int argc, char** argv) {
     if (argc != 3) {
@@ -83,28 +20,42 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
+
+
+    // PackBits
     vector<unsigned char> input(
         (istreambuf_iterator<char>(in)),
         istreambuf_iterator<char>()
     );
     in.close();
+    
+    vector<unsigned char> packed;
+    packed.reserve(input.size() + input.size() / 128 + 1);
 
-    vector<unsigned char> output;
-    output.reserve(input.size() + input.size() / 128 + 1);
+    RLE_PackBits(input, packed);
 
-    RLE_PackBits(input, output);
+
+
+    // AAC encode
+    const uint32_t packed_len = static_cast<uint32_t>(packed.size());
+    vector<unsigned char> code(static_cast<size_t>(packed_len) * 2 + 32, 0);
+
+    const uint32_t bit_len = ac_encode_buffer(packed.data(), packed_len, code.data());
+    const uint32_t byte_len = bit_len / 8 + 1;
+
+
 
     ofstream out(argv[2], ios::binary);
     if (!out) {
         cerr << "Error: cannot open output file '" << argv[2] << "'" << endl;
         return EXIT_FAILURE;
     }
-    if (!output.empty()) {
-        out.write(
-            reinterpret_cast<const char*>(output.data()),
-            static_cast<streamsize>(output.size())
-        );
-    }
+    out.write(reinterpret_cast<const char*>(&packed_len), 4);
+    out.write(reinterpret_cast<const char*>(&bit_len), 4);
+    out.write(
+        reinterpret_cast<const char*>(code.data()),
+        static_cast<streamsize>(byte_len)
+    );
     if (!out) {
         cerr << "Error: failed writing to '" << argv[2] << "'" << endl;
         return EXIT_FAILURE;

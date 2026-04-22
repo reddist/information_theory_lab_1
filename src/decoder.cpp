@@ -4,33 +4,9 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
+#include "coders/AAC_D/coder.h"
+#include "coders/PackBits/coder.h"
 using namespace std;
-
-static bool RLE_UnpackBits(const vector<unsigned char>& in,
-                           vector<unsigned char>& out) {
-    const size_t n = in.size();
-    size_t i = 0;
-    while (i < n) {
-        const int8_t h = static_cast<int8_t>(in[i++]);
-
-        if (h == -128) {
-            continue;
-        }
-
-        if (h >= 0) {
-            const size_t count = static_cast<size_t>(h) + 1;
-            if (i + count > n) return false;
-            out.insert(out.end(), in.begin() + i, in.begin() + i + count);
-            i += count;
-        } else {
-            const size_t count = static_cast<size_t>(-static_cast<int>(h)) + 1;
-            if (i + 1 > n) return false;
-            const unsigned char byte = in[i++];
-            out.insert(out.end(), count, byte);
-        }
-    }
-    return true;
-}
 
 int main(int argc, char** argv) {
     if (argc != 3) {
@@ -40,27 +16,46 @@ int main(int argc, char** argv) {
 
     ifstream in(argv[1], ios::binary);
     if (!in) {
-        cerr << "Error: cannot open input file '" << argv[1] << "'\n";
+        cerr << "Error: cannot open input file '" << argv[1] << "'" << endl;
         return EXIT_FAILURE;
     }
 
-    vector<unsigned char> input(
-        (istreambuf_iterator<char>(in)),
-        istreambuf_iterator<char>()
-    );
+
+
+    // AAC decode
+    uint32_t packed_len = 0;
+    uint32_t bit_len    = 0;
+    in.read(reinterpret_cast<char*>(&packed_len), 4);
+    in.read(reinterpret_cast<char*>(&bit_len), 4);
+    if (!in) {
+        cerr << "Error: truncated header in '" << argv[1] << "'" << endl;
+        return EXIT_FAILURE;
+    }
+
+    const size_t byte_len = bit_len / 8 + 1;
+    vector<unsigned char> code(byte_len + 16, 0);
+    in.read(reinterpret_cast<char*>(code.data()), static_cast<streamsize>(byte_len));
     in.close();
 
-    vector<unsigned char> output;
-    output.reserve(input.size() * 2);
+    vector<unsigned char> packed(packed_len);
+    ac_decode_buffer(code.data(), packed_len, packed.data());
 
-    if (!RLE_UnpackBits(input, output)) {
-        cerr << "Error: truncated or malformed PackBits stream\n";
+
+
+    // UnpackBits
+    vector<unsigned char> output;
+    output.reserve(static_cast<size_t>(packed_len) * 2);
+
+    if (!RLE_UnpackBits(packed, output)) {
+        cerr << "Error: truncated or malformed PackBits stream" << endl;
         return EXIT_FAILURE;
     }
+
+
 
     ofstream out(argv[2], ios::binary);
     if (!out) {
-        cerr << "Error: cannot open output file '" << argv[2] << "'\n";
+        cerr << "Error: cannot open output file '" << argv[2] << "'" << endl;
         return EXIT_FAILURE;
     }
     if (!output.empty()) {
@@ -68,7 +63,7 @@ int main(int argc, char** argv) {
                   static_cast<streamsize>(output.size()));
     }
     if (!out) {
-        cerr << "Error: failed writing to '" << argv[2] << "'\n";
+        cerr << "Error: failed writing to '" << argv[2] << "'" << endl;
         return EXIT_FAILURE;
     }
 
