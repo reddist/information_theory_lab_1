@@ -4,8 +4,9 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
-#include "coders/AAC_D/coder.h"
 #include "coders/PackBits/coder.h"
+#include "coders/AAC_D/coder.h"
+#include "coders/MTF/coder.h"
 using namespace std;
 
 int main(int argc, char** argv) {
@@ -43,11 +44,22 @@ int main(int argc, char** argv) {
 
 
     // UnpackBits
-    vector<unsigned char> output;
-    output.reserve(static_cast<size_t>(packed_len) * 2);
+    vector<unsigned char> unpacked;
+    unpacked.reserve(static_cast<size_t>(packed_len) * 2);
 
-    if (!RLE_UnpackBits(packed, output)) {
+    if (!RLE_UnpackBits(packed, unpacked)) {
         cerr << "Error: truncated or malformed PackBits stream" << endl;
+        return EXIT_FAILURE;
+    }
+
+
+
+    // MTF decode
+    vector<unsigned char> output;
+    output.reserve(unpacked.size());
+
+    if (!MTF_dec(unpacked, output)) {
+        cerr << "Error: malformed MTF stream" << endl;
         return EXIT_FAILURE;
     }
 

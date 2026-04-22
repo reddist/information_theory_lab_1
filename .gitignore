@@ -7,4 +7,5 @@ src/one_transform_coders
 
 tests/test_only_PackBits.cmd
 tests/test_only_ac.cmd
+tests/test_only_MTF.cmd
 tests/all.cmd

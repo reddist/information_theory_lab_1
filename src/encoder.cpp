@@ -4,8 +4,9 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
-#include "coders/AAC_D/coder.h"
 #include "coders/PackBits/coder.h"
+#include "coders/AAC_D/coder.h"
+#include "coders/MTF/coder.h"
 using namespace std;
 
 int main(int argc, char** argv) {
@@ -22,17 +23,25 @@ int main(int argc, char** argv) {
 
 
 
-    // PackBits
+    // MTF encode
     vector<unsigned char> input(
         (istreambuf_iterator<char>(in)),
         istreambuf_iterator<char>()
     );
     in.close();
-    
-    vector<unsigned char> packed;
-    packed.reserve(input.size() + input.size() / 128 + 1);
 
-    RLE_PackBits(input, packed);
+    vector<unsigned char> mtf;
+    mtf.reserve(input.size());
+
+    MTF_enc(input, mtf);
+
+
+
+    // PackBits
+    vector<unsigned char> packed;
+    packed.reserve(mtf.size() + mtf.size() / 128 + 1);
+
+    RLE_PackBits(mtf, packed);
 
 
 
