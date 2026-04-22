@@ -7,6 +7,7 @@
 #include "coders/PackBits/coder.h"
 #include "coders/AAC_D/coder.h"
 #include "coders/MTF/coder.h"
+#include "coders/BWT/coder.h"
 using namespace std;
 
 int main(int argc, char** argv) {
@@ -55,11 +56,21 @@ int main(int argc, char** argv) {
 
 
     // MTF decode
-    vector<unsigned char> output;
-    output.reserve(unpacked.size());
+    vector<unsigned char> mtf;
+    mtf.reserve(unpacked.size());
 
-    if (!MTF_dec(unpacked, output)) {
+    if (!MTF_dec(unpacked, mtf)) {
         cerr << "Error: malformed MTF stream" << endl;
+        return EXIT_FAILURE;
+    }
+
+
+
+    // BWT decode
+    vector<unsigned char> output;
+
+    if (!BWT_dec(mtf, output)) {
+        cerr << "Error: truncated or malformed BWT stream" << endl;
         return EXIT_FAILURE;
     }
 

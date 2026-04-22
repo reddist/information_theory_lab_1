@@ -7,6 +7,7 @@
 #include "coders/PackBits/coder.h"
 #include "coders/AAC_D/coder.h"
 #include "coders/MTF/coder.h"
+#include "coders/BWT/coder.h"
 using namespace std;
 
 int main(int argc, char** argv) {
@@ -23,17 +24,25 @@ int main(int argc, char** argv) {
 
 
 
-    // MTF encode
+    // BWT encode
     vector<unsigned char> input(
         (istreambuf_iterator<char>(in)),
         istreambuf_iterator<char>()
     );
     in.close();
 
-    vector<unsigned char> mtf;
-    mtf.reserve(input.size());
+    vector<unsigned char> bwt;
+    bwt.reserve(input.size() + 4);
 
-    MTF_enc(input, mtf);
+    BWT_enc(input, bwt);
+
+
+
+    // MTF encode
+    vector<unsigned char> mtf;
+    mtf.reserve(bwt.size());
+
+    MTF_enc(bwt, mtf);
 
 
 
