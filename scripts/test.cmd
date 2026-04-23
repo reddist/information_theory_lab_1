@@ -6,7 +6,7 @@ set "RED=!ESC![31m"
 set "RESET=!ESC![0m"
 
 
-cmd /c ".\tests\compile.cmd"
+cmd /c ".\scripts\compile.cmd"
 
 
 echo.

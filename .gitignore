@@ -5,10 +5,10 @@ wittencleary
 
 src/one_transform_coders
 
-tests/test_only_PackBits.cmd
-tests/test_only_ac.cmd
-tests/test_only_MTF.cmd
-tests/test_only_BWT.cmd
-tests/all.cmd
+scripts/test_only_PackBits.cmd
+scripts/test_only_ac.cmd
+scripts/test_only_MTF.cmd
+scripts/test_only_BWT.cmd
+scripts/all.cmd
 
 report.exe
