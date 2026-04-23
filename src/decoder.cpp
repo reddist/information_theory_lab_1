@@ -25,9 +25,9 @@ int main(int argc, char** argv) {
 
 
     // AAC decode
-    uint32_t packed_len = 0;
+    uint32_t mtf_len = 0;
     uint32_t bit_len    = 0;
-    in.read(reinterpret_cast<char*>(&packed_len), 4);
+    in.read(reinterpret_cast<char*>(&mtf_len), 4);
     in.read(reinterpret_cast<char*>(&bit_len), 4);
     if (!in) {
         cerr << "Error: truncated header in '" << argv[1] << "'" << endl;
@@ -39,27 +39,27 @@ int main(int argc, char** argv) {
     in.read(reinterpret_cast<char*>(code.data()), static_cast<streamsize>(byte_len));
     in.close();
 
-    vector<unsigned char> packed(packed_len);
-    ac_decode_buffer(code.data(), packed_len, packed.data());
+    vector<unsigned char> mtf(mtf_len);
+    ac_decode_buffer(code.data(), mtf_len, mtf.data());
 
 
 
     // UnpackBits
-    vector<unsigned char> unpacked;
-    unpacked.reserve(static_cast<size_t>(packed_len) * 2);
+    // vector<unsigned char> unpacked;
+    // unpacked.reserve(static_cast<size_t>(packed_len) * 2);
 
-    if (!RLE_UnpackBits(packed, unpacked)) {
-        cerr << "Error: truncated or malformed PackBits stream" << endl;
-        return EXIT_FAILURE;
-    }
+    // if (!RLE_UnpackBits(packed, unpacked)) {
+    //     cerr << "Error: truncated or malformed PackBits stream" << endl;
+    //     return EXIT_FAILURE;
+    // }
 
 
 
     // MTF decode
-    vector<unsigned char> mtf;
-    mtf.reserve(unpacked.size());
+    vector<unsigned char> bwt;
+    bwt.reserve(mtf.size());
 
-    if (!MTF_dec(unpacked, mtf)) {
+    if (!MTF_dec(mtf, bwt)) {
         cerr << "Error: malformed MTF stream" << endl;
         return EXIT_FAILURE;
     }
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     // BWT decode
     vector<unsigned char> output;
 
-    if (!BWT_dec(mtf, output)) {
+    if (!BWT_dec(bwt, output)) {
         cerr << "Error: truncated or malformed BWT stream" << endl;
         return EXIT_FAILURE;
     }

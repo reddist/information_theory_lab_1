@@ -47,18 +47,18 @@ int main(int argc, char** argv) {
 
 
     // PackBits
-    vector<unsigned char> packed;
-    packed.reserve(mtf.size() + mtf.size() / 128 + 1);
+    // vector<unsigned char> packed;
+    // packed.reserve(mtf.size() + mtf.size() / 128 + 1);
 
-    RLE_PackBits(mtf, packed);
+    // RLE_PackBits(mtf, packed);
 
 
 
     // AAC encode
-    const uint32_t packed_len = static_cast<uint32_t>(packed.size());
-    vector<unsigned char> code(static_cast<size_t>(packed_len) * 2 + 32, 0);
+    const uint32_t mtf_len = static_cast<uint32_t>(mtf.size());
+    vector<unsigned char> code(static_cast<size_t>(mtf_len) * 2 + 32, 0);
 
-    const uint32_t bit_len = ac_encode_buffer(packed.data(), packed_len, code.data());
+    const uint32_t bit_len = ac_encode_buffer(mtf.data(), mtf_len, code.data());
     const uint32_t byte_len = bit_len / 8 + 1;
 
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         cerr << "Error: cannot open output file '" << argv[2] << "'" << endl;
         return EXIT_FAILURE;
     }
-    out.write(reinterpret_cast<const char*>(&packed_len), 4);
+    out.write(reinterpret_cast<const char*>(&mtf_len), 4);
     out.write(reinterpret_cast<const char*>(&bit_len), 4);
     out.write(
         reinterpret_cast<const char*>(code.data()),
