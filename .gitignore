@@ -10,3 +10,5 @@ tests/test_only_ac.cmd
 tests/test_only_MTF.cmd
 tests/test_only_BWT.cmd
 tests/all.cmd
+
+report.exe
